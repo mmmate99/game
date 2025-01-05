@@ -1,0 +1,42 @@
+using UnityEngine;
+
+public class CameraCollision : MonoBehaviour
+{
+    public Transform target;       // A karakter (amit követ a kamera)
+    public float minDistance = 1f; // Kamera legközelebbi távolsága
+    public float maxDistance = 5f; // Kamera alapértelmezett távolsága
+    public float smoothSpeed = 10f; // Kamera mozgásának simasága
+    public LayerMask collisionMask; // A rétegek, amikkel ütközhet a kamera
+
+    private float currentDistance;
+
+    void Start()
+    {
+        currentDistance = maxDistance;
+    }
+
+    void LateUpdate()
+    {
+        if (target == null) return;
+
+        // A karakter pozíciója, amit követ a kamera
+        Vector3 targetPosition = target.position + Vector3.up * 2.0f; // Fejmagasság
+
+        // Raycast az akadályok ellenőrzésére
+        RaycastHit hit;
+        if (Physics.Raycast(targetPosition, transform.position - targetPosition, out hit, maxDistance, collisionMask))
+        {
+            // Ha akadály van, állítsd a kamera távolságát a találati pontig
+            currentDistance = Mathf.Clamp(hit.distance, minDistance, maxDistance);
+        }
+        else
+        {
+            // Nincs akadály, visszaáll az alap távolságra
+            currentDistance = Mathf.Lerp(currentDistance, maxDistance, Time.deltaTime * smoothSpeed);
+        }
+
+        // Kamera új pozíciója
+        transform.position = targetPosition - transform.forward * currentDistance;
+        transform.LookAt(targetPosition); // Mindig nézze a karaktert
+    }
+}
