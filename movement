@@ -1,0 +1,63 @@
+using UnityEngine;
+
+[RequireComponent(typeof(CharacterController))]
+public class ThirdPersonMovement : MonoBehaviour
+{
+    public float moveSpeed = 5.0f;
+    public float jumpForce = 5.0f;
+    public float gravity = -9.81f;
+
+    private CharacterController controller;
+    private Vector3 velocity;
+    private Vector3 moveDirection;
+
+    public Transform cameraTransform;
+
+    void Start()
+    {
+        controller = GetComponent<CharacterController>();
+    }
+
+    void Update()
+    {
+        // Mozgás irányának kiszámítása
+        float horizontal = Input.GetAxisRaw("Horizontal"); // A/D
+        float vertical = Input.GetAxisRaw("Vertical");     // W/S
+        Vector3 inputDirection = new Vector3(horizontal, 0, vertical).normalized;
+
+        // Ha van bemenet, számítsd ki az irányt
+        if (inputDirection.magnitude >= 0.1f)
+        {
+            // Forgatás a kamera irányába
+            float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + cameraTransform.eulerAngles.y;
+            float smoothAngle = Mathf.LerpAngle(transform.eulerAngles.y, targetAngle, Time.deltaTime * 10f);
+            transform.rotation = Quaternion.Euler(0, smoothAngle, 0);
+
+            // Mozgás iránya a kamera nézetéhez igazítva
+            moveDirection = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
+        }
+        else
+        {
+            // Nincs bemenet -> Mozgás irányának nullázása
+            moveDirection = Vector3.zero;
+        }
+
+        // Talajellenőrzés és ugrás indítása
+        if (controller.isGrounded)
+        {
+            velocity.y = -2f; // Talajhoz ragasztás
+
+            if (Input.GetButtonDown("Jump"))
+            {
+                velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+            }
+        }
+
+        // Gravitáció alkalmazása
+        velocity.y += gravity * Time.deltaTime;
+
+        // Végső mozgásvektor
+        Vector3 finalMove = (moveDirection * moveSpeed) + new Vector3(0, velocity.y, 0);
+        controller.Move(finalMove * Time.deltaTime);
+    }
+}
