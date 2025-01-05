@@ -1,0 +1,33 @@
+using UnityEngine;
+
+public class ThirdPersonCamera : MonoBehaviour
+{
+    public Transform target; // A karakter, amit követ a kamera
+    public float distance = 5.0f;
+    public float height = 2.0f;
+    public float rotationSpeed = 5.0f;
+
+    private float yaw = 0.0f;
+    private float pitch = 0.0f;
+
+    void LateUpdate()
+    {
+        if(Cursor.lockState != CursorLockMode.Locked) return;
+        
+        if (target == null) return;
+
+        // Kamera forgatás egérrel
+        yaw += Input.GetAxis("Mouse X") * rotationSpeed;
+        pitch -= Input.GetAxis("Mouse Y") * rotationSpeed;
+        pitch = Mathf.Clamp(pitch, -90f, 90f); // Ne forgassa túl
+
+        // Pozíció kiszámítása
+        Vector3 targetPosition = target.position + Vector3.up * height;
+        Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
+        Vector3 offset = rotation * Vector3.back * distance;
+        transform.position = targetPosition + offset;
+
+        // Kamera mindig nézze a karaktert
+        transform.LookAt(targetPosition);
+    }
+}
